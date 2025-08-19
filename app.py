@@ -32,10 +32,12 @@ def chat_api():
             {"role": "user", "content": user_msg}
         ]
     }
+
     with httpx.Client(timeout=30) as client:
         r = client.post(MISTRAL_ENDPOINT, headers=headers, json=payload)
         r.raise_for_status()
         reply = r.json()["choices"][0]["message"]["content"]
+
     return jsonify({"reply": reply})
 
 if __name__ == "__main__":
