@@ -1,65 +1,160 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Chat privé</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Lusk.bzh</title>
   <style>
-    body { font-family: sans-serif; background: #0b0b0c; color: #e7e7ea; margin: 0; }
-    header { padding: 16px; border-bottom: 1px solid #333; }
-    main { max-width: 700px; margin: 0 auto; padding: 16px; }
-    .chat { display: flex; flex-direction: column; gap: 12px; }
-    .msg { padding: 10px 14px; border-radius: 12px; max-width: 80%; white-space: pre-wrap; }
-    .user { align-self: flex-end; background: #1f2937; }
-    .bot { align-self: flex-start; background: #151517; }
-    form { display: flex; gap: 8px; margin-top: 16px; }
-    textarea { flex: 1; resize: vertical; min-height: 60px; padding: 8px; border-radius: 8px; border: 1px solid #444; background: #0e0e10; color: #e7e7ea; }
-    button { padding: 0 16px; border-radius: 8px; border: 1px solid #444; background: #202127; color: #e7e7ea; cursor: pointer; }
+    body {
+      font-family: "Comic Sans MS", cursive, sans-serif;
+      background: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      margin: 0;
+    }
+
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .bubble-wrapper {
+      display: flex;
+      width: 100%;
+    }
+
+    .bubble {
+      max-width: 70%;
+      padding: 12px 18px;
+      border-radius: 20px;
+      line-height: 1.4;
+      position: relative;
+      display: inline-block;
+      animation: pop 0.3s ease;
+      word-wrap: break-word;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .user {
+      background: linear-gradient(120deg, #FFA500, #FFB347);
+      border: 2px solid #FF8C00;
+      margin-left: auto;
+    }
+
+    .bot {
+      background: linear-gradient(120deg, #0078D7, #4DA6FF);
+      border: 2px solid #005A9E;
+      margin-right: auto;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    #input-area {
+      display: flex;
+      padding: 10px;
+      background: #fff;
+      border-top: 2px solid #ddd;
+    }
+
+    #message-input {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid #333;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      margin-left: 10px;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 10px;
+      background: #FFA500;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #FFB347;
+    }
+
+    @media (max-width: 600px) {
+      .bubble {
+        max-width: 85%;
+        font-size: 14px;
+        padding: 10px 14px;
+      }
+
+      button, #message-input {
+        font-size: 14px;
+        padding: 8px;
+      }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <strong>Chat respectueux de la vie privée</strong>
-    <div style="font-size:14px;color:#aaa;">Les messages ne sont pas stockés.</div>
-  </header>
-  <main>
-    <div id="log" class="chat"></div>
-    <form id="f">
-      <textarea id="msg" placeholder="Pose ta question…" required></textarea>
-      <button type="submit">Envoyer</button>
-    </form>
-  </main>
-  <script>
-    const log = document.getElementById('log');
-    const form = document.getElementById('f');
-    const input = document.getElementById('msg');
+  <div id="chat-container"></div>
+  <div id="input-area">
+    <input id="message-input" type="text" placeholder="Écris ton message…" />
+    <button onclick="sendMessage()">Envoyer</button>
+  </div>
 
-    function bubble(text, cls) {
-      const div = document.createElement('div');
-      div.className = `msg ${cls}`;
-      div.textContent = text;
-      log.appendChild(div);
-      div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  <script>
+    const chatContainer = document.getElementById("chat-container");
+    const input = document.getElementById("message-input");
+
+    function addBubble(text, sender) {
+      const bubble = document.createElement("div");
+      bubble.classList.add("bubble", sender);
+
+      bubble.innerText = text;
+      const wrapper = document.createElement("div");
+      wrapper.classList.add("bubble-wrapper");
+      if(sender === "user") wrapper.style.justifyContent = "flex-end";
+      else wrapper.style.justifyContent = "flex-start";
+
+      wrapper.appendChild(bubble);
+      chatContainer.appendChild(wrapper);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const text = (input.value || '').trim();
+    async function sendMessage() {
+      const text = input.value.trim();
       if (!text) return;
-      bubble(text, 'user');
-      input.value = '';
+      addBubble(text, "user");
+      input.value = "";
 
       try {
-        const res = await fetch('/chat_api', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/chat_api", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: text })
         });
-        const data = await res.json();
-        bubble(data.reply || 'Réponse vide', 'bot');
-      } catch {
-        bubble('Erreur réseau', 'bot');
+        const data = await response.json();
+        if (data.choices) {
+          addBubble(data.choices[0].message.content, "bot");
+        } else if (data.error) {
+          addBubble("⚠️ Erreur: " + data.error, "bot");
+        }
+      } catch (err) {
+        addBubble("⚠️ Problème réseau", "bot");
       }
+    }
+
+    input.addEventListener("keypress", function(e) {
+      if (e.key === "Enter") sendMessage();
     });
   </script>
 </body>
