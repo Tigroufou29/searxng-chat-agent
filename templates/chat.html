@@ -27,6 +27,12 @@
       align-items: flex-end;
       margin: 8px;
     }
+    .message.user {
+      justify-content: flex-end;
+    }
+    .message.bot {
+      justify-content: flex-start;
+    }
 
     /* Avatar style */
     .avatar {
@@ -54,13 +60,12 @@
       position: relative;
       word-wrap: break-word;
     }
-    .user {
-      margin-left: auto;
+    .bubble.user {
       background: #ffffff;
       color: #003366;
       border: 2px solid #003366;
     }
-    .user::after {
+    .bubble.user::after {
       content: "";
       position: absolute;
       right: -10px;
@@ -68,11 +73,11 @@
       border: 10px solid transparent;
       border-left-color: #ffffff;
     }
-    .bot {
+    .bubble.bot {
       background: #003366;
       color: #ffffff;
     }
-    .bot::after {
+    .bubble.bot::after {
       content: "";
       position: absolute;
       left: -10px;
@@ -126,7 +131,7 @@
       wrapper.className = "message " + sender;
 
       if (sender === "bot") {
-        // Avatar bot
+        // Avatar bot avec ton image PNG
         const avatar = document.createElement("div");
         avatar.className = "avatar";
         avatar.innerHTML = '<img src="http://declic-informatique.quickconnect.to/d/s/14ebcw7F3LUy4CbCXcbO80vPp1F6rNWc/O7Qwc4rdOCiK0l0s2ctY5sPKW_ObiUAv-8blAXk0fhgw" alt="Bot">';
@@ -137,10 +142,6 @@
       div.className = "bubble " + sender;
       div.textContent = text;
       wrapper.appendChild(div);
-
-      if (sender === "user") {
-        wrapper.appendChild(div);
-      }
 
       chatContainer.appendChild(wrapper);
       chatContainer.scrollTop = chatContainer.scrollHeight;
