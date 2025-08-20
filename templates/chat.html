@@ -93,10 +93,10 @@
       const message = document.createElement("div");
       message.className = "message " + sender;
 
-      // Avatar externe
+      // Avatar externe pour le bot
       if (sender === "bot") {
         const avatar = document.createElement("img");
-        avatar.src = "http://declic-informatique.quickconnect.to/d/s/14ebcw7F3LUy4CbCXcbO80vPp1F6rNWc/O7Qwc4rdOCiK0l0s2ctY5sPKW_ObiUAv-8blAXk0fhgw";
+        avatar.src = "/static/img/tetelusk.png";
         avatar.className = "avatar";
         message.appendChild(avatar);
       }
@@ -104,11 +104,11 @@
       const bubble = document.createElement("div");
       bubble.className = "bubble " + sender;
 
-      // Contenu bulle
+      // Contenu de la bulle
       if (sender === "bot") {
         bubble.innerHTML = `
           <div style="display:flex; align-items:center; gap:8px;">
-            <img src="http://declic-informatique.quickconnect.to/d/s/14ebcw7F3LUy4CbCXcbO80vPp1F6rNWc/O7Qwc4rdOCiK0l0s2ctY5sPKW_ObiUAv-8blAXk0fhgw"
+            <img src="/static/img/tetelusk.png"
                  alt="Bot"
                  style="width:20px; height:20px; border-radius:50%; flex-shrink:0;">
             <span>${text}</span>
