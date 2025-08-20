@@ -20,16 +20,42 @@
       padding: 10px;
       overflow-y: auto;
     }
+
+    /* Structure message */
+    .message {
+      display: flex;
+      align-items: flex-end;
+      margin: 8px;
+    }
+
+    /* Avatar style */
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin: 0 8px;
+      flex-shrink: 0;
+      background: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .avatar img {
+      width: 100%;
+      height: auto;
+    }
+
     .bubble {
       max-width: 75%;
       padding: 12px 16px;
-      margin: 8px;
       border-radius: 18px;
       position: relative;
       word-wrap: break-word;
     }
     .user {
-      align-self: flex-end;
+      margin-left: auto;
       background: #ffffff;
       color: #003366;
       border: 2px solid #003366;
@@ -43,7 +69,6 @@
       border-left-color: #ffffff;
     }
     .bot {
-      align-self: flex-start;
       background: #003366;
       color: #ffffff;
     }
@@ -55,6 +80,7 @@
       border: 10px solid transparent;
       border-right-color: #003366;
     }
+
     #input-container {
       display: flex;
       padding: 10px;
@@ -96,10 +122,27 @@
     const sendBtn = document.getElementById("send-btn");
 
     function addMessage(text, sender) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "message " + sender;
+
+      if (sender === "bot") {
+        // Avatar bot
+        const avatar = document.createElement("div");
+        avatar.className = "avatar";
+        avatar.innerHTML = '<img src="http://declic-informatique.quickconnect.to/d/s/14ebcw7F3LUy4CbCXcbO80vPp1F6rNWc/O7Qwc4rdOCiK0l0s2ctY5sPKW_ObiUAv-8blAXk0fhgw" alt="Bot">';
+        wrapper.appendChild(avatar);
+      }
+
       const div = document.createElement("div");
       div.className = "bubble " + sender;
       div.textContent = text;
-      chatContainer.appendChild(div);
+      wrapper.appendChild(div);
+
+      if (sender === "user") {
+        wrapper.appendChild(div);
+      }
+
+      chatContainer.appendChild(wrapper);
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
