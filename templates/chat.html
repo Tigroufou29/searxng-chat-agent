@@ -20,12 +20,13 @@
       padding: 10px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 12px;
     }
 
     .bubble-wrapper {
       display: flex;
-      width: 100%;
+      align-items: flex-end;
+      gap: 8px;
     }
 
     .bubble {
@@ -45,12 +46,58 @@
       background: linear-gradient(120deg, #FFA500, #FFB347);
       border: 2px solid #FF8C00;
       margin-left: auto;
+      border-bottom-right-radius: 4px;
+    }
+
+    .user::after {
+      content: "";
+      position: absolute;
+      right: -10px;
+      bottom: 10px;
+      width: 0;
+      height: 0;
+      border-left: 12px solid #FF8C00;
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
     }
 
     .bot {
       background: linear-gradient(120deg, #0078D7, #4DA6FF);
       border: 2px solid #005A9E;
       margin-right: auto;
+      border-bottom-left-radius: 4px;
+    }
+
+    .bot::after {
+      content: "";
+      position: absolute;
+      left: -10px;
+      bottom: 10px;
+      width: 0;
+      height: 0;
+      border-right: 12px solid #005A9E;
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: white;
+      font-size: 18px;
+    }
+
+    .avatar-user {
+      background: #FFA500;
+    }
+
+    .avatar-bot {
+      background: #0078D7;
     }
 
     @keyframes pop {
@@ -101,6 +148,12 @@
         font-size: 14px;
         padding: 8px;
       }
+
+      .avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+      }
     }
   </style>
 </head>
@@ -116,16 +169,27 @@
     const input = document.getElementById("message-input");
 
     function addBubble(text, sender) {
-      const bubble = document.createElement("div");
-      bubble.classList.add("bubble", sender);
-
-      bubble.innerText = text;
       const wrapper = document.createElement("div");
       wrapper.classList.add("bubble-wrapper");
-      if(sender === "user") wrapper.style.justifyContent = "flex-end";
-      else wrapper.style.justifyContent = "flex-start";
 
-      wrapper.appendChild(bubble);
+      const bubble = document.createElement("div");
+      bubble.classList.add("bubble", sender);
+      bubble.innerText = text;
+
+      const avatar = document.createElement("div");
+      avatar.classList.add("avatar", sender === "user" ? "avatar-user" : "avatar-bot");
+      avatar.innerText = sender === "user" ? "👤" : "🤖";
+
+      if (sender === "user") {
+        wrapper.style.justifyContent = "flex-end";
+        wrapper.appendChild(bubble);
+        wrapper.appendChild(avatar);
+      } else {
+        wrapper.style.justifyContent = "flex-start";
+        wrapper.appendChild(avatar);
+        wrapper.appendChild(bubble);
+      }
+
       chatContainer.appendChild(wrapper);
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
