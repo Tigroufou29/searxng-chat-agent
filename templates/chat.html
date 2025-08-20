@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Chat Lusk.bzh</title>
   <style>
     body {
@@ -117,7 +117,7 @@
       padding: 10px;
       border: 2px solid #333;
       border-radius: 10px;
-      font-size: 16px;
+      font-size: 16px; /* évite le zoom automatique */
     }
 
     button {
@@ -127,7 +127,7 @@
       border-radius: 10px;
       background: #FFA500;
       color: white;
-      font-size: 16px;
+      font-size: 16px; /* cohérent avec l’input */
       cursor: pointer;
       transition: 0.2s;
       font-weight: bold;
@@ -145,7 +145,7 @@
       }
 
       button, #message-input {
-        font-size: 14px;
+        font-size: 16px; /* garder >=16px pour éviter le zoom */
         padding: 8px;
       }
 
@@ -160,7 +160,11 @@
 <body>
   <div id="chat-container"></div>
   <div id="input-area">
-    <input id="message-input" type="text" placeholder="Écris ton message…" />
+    <input id="message-input" 
+           type="text" 
+           placeholder="Écris ton message…" 
+           inputmode="text" 
+           enterkeyhint="send" />
     <button onclick="sendMessage()">Envoyer</button>
   </div>
 
@@ -217,8 +221,12 @@
       }
     }
 
-    input.addEventListener("keypress", function(e) {
-      if (e.key === "Enter") sendMessage();
+    // ✅ fonctionne sur desktop + mobile
+    input.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        e.preventDefault(); // empêche le saut de ligne
+        sendMessage();
+      }
     });
   </script>
 </body>
