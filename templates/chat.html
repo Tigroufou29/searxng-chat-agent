@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <title>Chat Agent</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -35,6 +36,7 @@
       line-height: 1.4;
       font-size: 15px;
       word-wrap: break-word;
+      white-space: pre-wrap;
     }
     .bubble.user {
       background: #4a90e2;
@@ -93,7 +95,6 @@
       const message = document.createElement("div");
       message.className = "message " + sender;
 
-      // Avatar externe pour le bot
       if (sender === "bot") {
         const avatar = document.createElement("img");
         avatar.src = "/static/img/tetelusk.png";
@@ -103,24 +104,60 @@
 
       const bubble = document.createElement("div");
       bubble.className = "bubble " + sender;
-
-      // Contenu de la bulle
-      if (sender === "bot") {
-        bubble.innerHTML = `
-          <div style="display:flex; align-items:center; gap:8px;">
-            <img src="/static/img/tetelusk.png"
-                 alt="Bot"
-                 style="width:20px; height:20px; border-radius:50%; flex-shrink:0;">
-            <span>${text}</span>
-          </div>
-        `;
-      } else {
-        bubble.textContent = text;
-      }
-
       message.appendChild(bubble);
       chatContainer.appendChild(message);
       chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      if (sender === "bot") {
+        showTypingUntilResponse(bubble, text);
+      } else {
+        bubble.textContent = text;
+      }
+    }
+
+    // Affiche les points animés jusqu'à ce que la réponse arrive
+    function showTypingUntilResponse(element, userMessage) {
+      const typing = document.createElement("span");
+      typing.textContent = "";
+      element.appendChild(typing);
+
+      let dots = 0;
+      const interval = setInterval(() => {
+        dots = (dots + 1) % 4;
+        typing.textContent = ".".repeat(dots);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }, 500);
+
+      // Appel réel à l'API pour récupérer la réponse
+      fetchResponse(userMessage).then(reply => {
+        clearInterval(interval);
+        typing.remove();
+        typeWriterMarkdown(element, reply);
+      });
+    }
+
+    // Appelle ton serveur pour obtenir la réponse
+    async function fetchResponse(userMessage) {
+      try {
+        const r = await fetch("/chat_api", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: userMessage }),
+        });
+        const data = await r.json();
+        return data.reply || "⚠️ Erreur réseau";
+      } catch (e) {
+        return "⚠️ Erreur réseau";
+      }
+    }
+
+    // Effet "typing" avec rendu Markdown
+    function typeWriterMarkdown(element, text, i = 0) {
+      if (i <= text.length) {
+        element.innerHTML = marked.parse(text.slice(0, i));
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        setTimeout(() => typeWriterMarkdown(element, text, i + 1), 20);
+      }
     }
 
     async function sendMessage() {
@@ -128,20 +165,7 @@
       if (!text) return;
       addMessage(text, "user");
       input.value = "";
-
-      try {
-        const r = await fetch("/chat_api", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text }),
-        });
-        const data = await r.json();
-        if (data.reply) {
-          addMessage(data.reply, "bot");
-        }
-      } catch (e) {
-        addMessage("⚠️ Erreur réseau", "bot");
-      }
+      addMessage(text, "bot"); // ajoute un bot qui va gérer l'attente
     }
 
     sendBtn.onclick = sendMessage;
