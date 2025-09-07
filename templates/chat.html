@@ -109,18 +109,19 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
       if (sender === "bot") {
-        showTypingUntilResponse(bubble, text);
+        showTypingThenMessage(bubble, text);
       } else {
         bubble.textContent = text;
       }
     }
 
-    // Affiche les points animés jusqu'à ce que la réponse arrive
-    function showTypingUntilResponse(element, userMessage) {
+    // Affiche points animés puis texte avec Markdown
+    function showTypingThenMessage(bubble, userMessage) {
       const typing = document.createElement("span");
       typing.textContent = "";
-      element.appendChild(typing);
+      bubble.appendChild(typing);
 
+      // animation points
       let dots = 0;
       const interval = setInterval(() => {
         dots = (dots + 1) % 4;
@@ -128,15 +129,26 @@
         chatContainer.scrollTop = chatContainer.scrollHeight;
       }, 500);
 
-      // Appel réel à l'API pour récupérer la réponse
       fetchResponse(userMessage).then(reply => {
         clearInterval(interval);
         typing.remove();
-        typeWriterMarkdown(element, reply);
+
+        // affichage caractère par caractère
+        let i = 0;
+        const typingInterval = setInterval(() => {
+          bubble.textContent = reply.slice(0, i + 1);
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+          i++;
+          if (i >= reply.length) {
+            clearInterval(typingInterval);
+            // une fois terminé, appliquer le Markdown
+            bubble.innerHTML = marked.parse(reply);
+          }
+        }, 20); // vitesse de frappe
       });
     }
 
-    // Appelle ton serveur pour obtenir la réponse
+    // Appel à ton API
     async function fetchResponse(userMessage) {
       try {
         const r = await fetch("/chat_api", {
@@ -151,21 +163,12 @@
       }
     }
 
-    // Effet "typing" avec rendu Markdown
-    function typeWriterMarkdown(element, text, i = 0) {
-      if (i <= text.length) {
-        element.innerHTML = marked.parse(text.slice(0, i));
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-        setTimeout(() => typeWriterMarkdown(element, text, i + 1), 20);
-      }
-    }
-
-    async function sendMessage() {
+    function sendMessage() {
       const text = input.value.trim();
       if (!text) return;
       addMessage(text, "user");
       input.value = "";
-      addMessage(text, "bot"); // ajoute un bot qui va gérer l'attente
+      addMessage(text, "bot"); // ajouter le bot pour l'effet typing
     }
 
     sendBtn.onclick = sendMessage;
