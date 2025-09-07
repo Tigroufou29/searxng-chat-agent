@@ -109,19 +109,18 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
       if (sender === "bot") {
-        showTypingThenMessage(bubble, text);
+        showTypingThenBlocks(bubble, text);
       } else {
         bubble.textContent = text;
       }
     }
 
-    // Affiche points animés puis texte avec Markdown
-    function showTypingThenMessage(bubble, userMessage) {
+    // Points animés pendant la réflexion
+    function showTypingThenBlocks(bubble, userMessage) {
       const typing = document.createElement("span");
       typing.textContent = "";
       bubble.appendChild(typing);
 
-      // animation points
       let dots = 0;
       const interval = setInterval(() => {
         dots = (dots + 1) % 4;
@@ -132,23 +131,23 @@
       fetchResponse(userMessage).then(reply => {
         clearInterval(interval);
         typing.remove();
-
-        // affichage caractère par caractère
-        let i = 0;
-        const typingInterval = setInterval(() => {
-          bubble.textContent = reply.slice(0, i + 1);
-          chatContainer.scrollTop = chatContainer.scrollHeight;
-          i++;
-          if (i >= reply.length) {
-            clearInterval(typingInterval);
-            // une fois terminé, appliquer le Markdown
-            bubble.innerHTML = marked.parse(reply);
-          }
-        }, 20); // vitesse de frappe
+        displayMarkdownBlocks(bubble, reply);
       });
     }
 
-    // Appel à ton API
+    // Découpe en blocs Markdown et affiche progressivement
+    async function displayMarkdownBlocks(bubble, text) {
+      const blocks = text.split(/\n\s*\n/); // séparation par paragraphes
+      for (let block of blocks) {
+        const div = document.createElement("div");
+        div.innerHTML = marked.parse(block);
+        bubble.appendChild(div);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        await new Promise(r => setTimeout(r, 200)); // délai entre blocs
+      }
+    }
+
+    // Appel API
     async function fetchResponse(userMessage) {
       try {
         const r = await fetch("/chat_api", {
@@ -168,7 +167,7 @@
       if (!text) return;
       addMessage(text, "user");
       input.value = "";
-      addMessage(text, "bot"); // ajouter le bot pour l'effet typing
+      addMessage(text, "bot");
     }
 
     sendBtn.onclick = sendMessage;
