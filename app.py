@@ -1,8 +1,10 @@
 import os
 import httpx
 from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS  # AJOUT: Import de CORS
 
 app = Flask(__name__)
+CORS(app)  # AJOUT: Activation de CORS pour toutes les routes
 
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 MISTRAL_ENDPOINT = "https://api.mistral.ai/v1/chat/completions"
