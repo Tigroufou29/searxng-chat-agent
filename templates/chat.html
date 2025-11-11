@@ -267,6 +267,75 @@
       transform: translateY(0);
     }
 
+    /* Indicateur de frappe */
+    .typing-indicator {
+      display: flex;
+      gap: 6px;
+      padding: 12px 0;
+      align-items: center;
+    }
+
+    .typing-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .typing-dots span {
+      width: 8px;
+      height: 8px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 50%;
+      animation: typingBounce 1.4s ease-in-out infinite both;
+    }
+
+    .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes typingBounce {
+      0%, 80%, 100% {
+        transform: scale(0.8);
+        opacity: 0.5;
+      }
+      40% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* Effet de texte progressif */
+    .word {
+      display: inline-block;
+      opacity: 0;
+      animation: wordFadeIn 0.3s ease-out forwards;
+    }
+
+    @keyframes wordFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Curseur de frappe */
+    .typing-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.2em;
+      background: #3b82f6;
+      margin-left: 2px;
+      animation: blink 1s infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
     /* Scrollbar personnalisée */
     #chat-container::-webkit-scrollbar {
       width: 6px;
@@ -364,7 +433,7 @@
     <div class="liquid-shape shape-3"></div>
   </div>
 
-  <!-- Header CORRIGÉ avec la bonne icône -->
+  <!-- Header -->
   <div class="glass-header">
     <div class="header-title">
       <img src="/static/img/tetelusk.png" alt="Lusk" class="lusk-logo">
@@ -427,42 +496,92 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
       if (sender === "bot") {
-        showTypingThenBlocks(bubble, text);
+        showTypingThenAnimatedText(bubble, text);
       } else {
         bubble.textContent = text;
       }
     }
 
-    // Points animés pendant la réflexion
-    function showTypingThenBlocks(bubble, userMessage) {
-      const typing = document.createElement("span");
-      typing.textContent = "";
-      bubble.appendChild(typing);
+    // Animation de frappe améliorée
+    function showTypingThenAnimatedText(bubble, userMessage) {
+      const typingContainer = document.createElement("div");
+      typingContainer.className = "typing-indicator";
+      
+      const typingText = document.createElement("span");
+      typingText.textContent = "Lusk rédige";
+      typingText.style.color = "rgba(0, 0, 0, 0.7)";
+      typingText.style.fontSize = "0.9em";
+      
+      const typingDots = document.createElement("div");
+      typingDots.className = "typing-dots";
+      typingDots.innerHTML = '<span></span><span></span><span></span>';
+      
+      typingContainer.appendChild(typingText);
+      typingContainer.appendChild(typingDots);
+      bubble.appendChild(typingContainer);
 
-      let dots = 0;
-      const interval = setInterval(() => {
-        dots = (dots + 1) % 4;
-        typing.textContent = ".".repeat(dots);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-      }, 500);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
 
       fetchResponse(userMessage).then(reply => {
-        clearInterval(interval);
-        typing.remove();
-        displayMarkdownBlocks(bubble, reply);
+        typingContainer.remove();
+        displayAnimatedText(bubble, reply);
       });
     }
 
-    // Découpe en blocs Markdown et affiche progressivement
-    async function displayMarkdownBlocks(bubble, text) {
-      const blocks = text.split(/\n\s*\n/); // séparation par paragraphes
-      for (let block of blocks) {
-        const div = document.createElement("div");
-        div.innerHTML = marked.parse(block);
-        bubble.appendChild(div);
+    // Affichage du texte mot par mot avec effet de fondu
+    async function displayAnimatedText(bubble, text) {
+      // Nettoyer le texte et le diviser en mots
+      const cleanText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                           .replace(/\n/g, '<br>');
+      
+      const words = cleanText.split(/(\s+)/); // Conserver les espaces
+      
+      let currentIndex = 0;
+      
+      async function typeNextWord() {
+        if (currentIndex >= words.length) return;
+        
+        const word = words[currentIndex];
+        const wordSpan = document.createElement('span');
+        wordSpan.className = 'word';
+        
+        // Gérer les sauts de ligne
+        if (word === '<br>') {
+          wordSpan.innerHTML = '<br>';
+          wordSpan.style.display = 'block';
+          wordSpan.style.height = '0.8em';
+        } else {
+          wordSpan.innerHTML = word;
+        }
+        
+        bubble.appendChild(wordSpan);
+        
+        // Faire défiler vers le bas
         chatContainer.scrollTop = chatContainer.scrollHeight;
-        await new Promise(r => setTimeout(r, 200)); // délai entre blocs
+        
+        currentIndex++;
+        
+        // Délai variable pour un effet plus naturel
+        const delay = getNaturalDelay(word);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        // Continuer avec le mot suivant
+        await typeNextWord();
       }
+      
+      await typeNextWord();
+    }
+
+    // Délai variable pour un effet plus naturel
+    function getNaturalDelay(word) {
+      if (word === '<br>') return 150; // Délai plus court pour les sauts de ligne
+      if (word.trim().length === 0) return 50; // Espaces très rapides
+      
+      const baseDelay = 40;
+      const lengthFactor = Math.min(word.length * 8, 100);
+      const randomFactor = Math.random() * 30;
+      
+      return baseDelay + lengthFactor + randomFactor;
     }
 
     // Appel API
