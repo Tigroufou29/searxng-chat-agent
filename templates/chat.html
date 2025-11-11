@@ -48,7 +48,6 @@
     .lusk-logo {
       width: 32px;
       height: 32px;
-      filter: brightness(0) invert(1);
     }
 
     .header-actions {
@@ -191,31 +190,10 @@
     }
 
     .bubble.bot {
-      background: rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.9);
       color: #1f2937;
       border: 1px solid rgba(255, 255, 255, 0.6);
       border-bottom-left-radius: 8px;
-    }
-
-    .bubble.bot strong {
-      color: #1e40af;
-      font-weight: 600;
-    }
-
-    .bubble.bot code {
-      background: rgba(0, 0, 0, 0.1);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9em;
-    }
-
-    .bubble.bot pre {
-      background: rgba(0, 0, 0, 0.1);
-      padding: 12px;
-      border-radius: 8px;
-      overflow-x: auto;
-      margin: 8px 0;
     }
 
     .avatar {
@@ -226,6 +204,7 @@
       flex-shrink: 0;
       border: 2px solid rgba(255, 255, 255, 0.3);
       backdrop-filter: blur(10px);
+      object-fit: cover;
     }
 
     /* Zone de saisie Liquid Glass */
@@ -284,41 +263,6 @@
 
     #send-btn:active {
       transform: translateY(0);
-    }
-
-    /* Indicateur de frappe */
-    .typing-indicator {
-      display: flex;
-      gap: 6px;
-      padding: 12px 0;
-      align-items: center;
-    }
-
-    .typing-dots {
-      display: flex;
-      gap: 4px;
-    }
-
-    .typing-dots span {
-      width: 8px;
-      height: 8px;
-      background: rgba(255, 255, 255, 0.6);
-      border-radius: 50%;
-      animation: typingBounce 1.4s ease-in-out infinite both;
-    }
-
-    .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
-    .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
-
-    @keyframes typingBounce {
-      0%, 80%, 100% {
-        transform: scale(0.8);
-        opacity: 0.5;
-      }
-      40% {
-        transform: scale(1);
-        opacity: 1;
-      }
     }
 
     /* Scrollbar personnalisée */
@@ -408,22 +352,6 @@
         display: none;
       }
     }
-
-    /* Animation d'apparition des blocs */
-    .message-block {
-      animation: blockFadeIn 0.6s ease-out;
-    }
-
-    @keyframes blockFadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
   </style>
 </head>
 <body>
@@ -442,7 +370,6 @@
     </div>
     <div class="header-actions">
       <button class="glass-btn" onclick="clearChat()">🗑️ Effacer</button>
-      <button class="glass-btn" onclick="toggleTheme()">🌙 Thème</button>
     </div>
   </div>
 
@@ -467,24 +394,29 @@
 
     function addMessage(text, sender) {
       const message = document.createElement("div");
-      message.className = `message ${sender}`;
+      message.className = "message " + sender;
 
       if (sender === "bot") {
         const avatar = document.createElement("img");
-        avatar.src = "/static/themes/simple/img/lusk.svg";
+        avatar.src = "/static/img/tetelusk.png";
         avatar.className = "avatar";
         avatar.alt = "Assistant Lusk";
         message.appendChild(avatar);
       }
 
       const bubble = document.createElement("div");
-      bubble.className = `bubble ${sender}`;
+      bubble.className = "bubble " + sender;
       message.appendChild(bubble);
 
       if (sender === "user") {
         const avatar = document.createElement("div");
         avatar.className = "avatar";
         avatar.style.background = "linear-gradient(135deg, #667eea, #764ba2)";
+        avatar.style.display = "flex";
+        avatar.style.alignItems = "center";
+        avatar.style.justifyContent = "center";
+        avatar.style.color = "white";
+        avatar.style.fontSize = "16px";
         avatar.innerHTML = "👤";
         message.appendChild(avatar);
       }
@@ -499,97 +431,75 @@
       }
     }
 
-    // Animation de frappe
+    // Points animés pendant la réflexion
     function showTypingThenBlocks(bubble, userMessage) {
-      const typingContainer = document.createElement("div");
-      typingContainer.className = "typing-indicator";
-      
-      const typingText = document.createElement("span");
-      typingText.textContent = "Lusk rédige";
-      typingText.style.color = "rgba(0, 0, 0, 0.7)";
-      typingText.style.fontSize = "0.9em";
-      
-      const typingDots = document.createElement("div");
-      typingDots.className = "typing-dots";
-      typingDots.innerHTML = '<span></span><span></span><span></span>';
-      
-      typingContainer.appendChild(typingText);
-      typingContainer.appendChild(typingDots);
-      bubble.appendChild(typingContainer);
+      const typing = document.createElement("span");
+      typing.textContent = "";
+      bubble.appendChild(typing);
 
-      chatContainer.scrollTop = chatContainer.scrollHeight;
+      let dots = 0;
+      const interval = setInterval(() => {
+        dots = (dots + 1) % 4;
+        typing.textContent = ".".repeat(dots);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }, 500);
 
       fetchResponse(userMessage).then(reply => {
-        typingContainer.remove();
+        clearInterval(interval);
+        typing.remove();
         displayMarkdownBlocks(bubble, reply);
       });
     }
 
-    // Affichage progressif des blocs Markdown
+    // Découpe en blocs Markdown et affiche progressivement
     async function displayMarkdownBlocks(bubble, text) {
-      const blocks = text.split(/\n\s*\n/);
-      
+      const blocks = text.split(/\n\s*\n/); // séparation par paragraphes
       for (let block of blocks) {
-        if (block.trim()) {
-          const blockDiv = document.createElement("div");
-          blockDiv.className = "message-block";
-          blockDiv.innerHTML = marked.parse(block);
-          bubble.appendChild(blockDiv);
-          chatContainer.scrollTop = chatContainer.scrollHeight;
-          await new Promise(r => setTimeout(r, 300));
-        }
+        const div = document.createElement("div");
+        div.innerHTML = marked.parse(block);
+        bubble.appendChild(div);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        await new Promise(r => setTimeout(r, 200)); // délai entre blocs
       }
     }
 
     // Appel API
     async function fetchResponse(userMessage) {
       try {
-        const response = await fetch("/chat_api", {
+        const r = await fetch("/chat_api", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: userMessage }),
         });
-        
-        if (!response.ok) throw new Error('Erreur API');
-        
-        const data = await response.json();
-        return data.reply || "Je n'ai pas pu générer de réponse. Pouvez-vous reformuler votre question ?";
-      } catch (error) {
-        console.error('Erreur:', error);
-        return "Désolé, je rencontre des difficultés techniques. Veuillez réessayer dans quelques instants.";
+        const data = await r.json();
+        return data.reply || "⚠️ Erreur réseau";
+      } catch (e) {
+        return "⚠️ Erreur réseau";
       }
     }
 
     function sendMessage() {
       const text = input.value.trim();
       if (!text) return;
-      
       addMessage(text, "user");
       input.value = "";
-      input.focus();
+      addMessage(text, "bot");
     }
 
-    // Événements
     sendBtn.onclick = sendMessage;
-    
     input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
+      if (e.key === "Enter") {
         e.preventDefault();
         sendMessage();
       }
     });
 
-    // Fonctions utilitaires
+    // Fonction pour effacer le chat
     function clearChat() {
       if (confirm("Voulez-vous vraiment effacer toute la conversation ?")) {
         chatContainer.innerHTML = '';
         addMessage("Conversation effacée. Comment puis-je vous aider ?", "bot");
       }
-    }
-
-    function toggleTheme() {
-      // Implémentation basique du changement de thème
-      document.body.style.filter = document.body.style.filter ? '' : 'invert(1) hue-rotate(180deg)';
     }
 
     // Focus automatique sur l'input
